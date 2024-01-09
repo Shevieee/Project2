@@ -64,20 +64,14 @@ def load_level(filename):
 
 level = load_level("lvl1.txt")
 images = {
+    "land": pygame.transform.scale(load_image('land.png'), (50, 50)),
     "grass": pygame.transform.scale(load_image('grass.png'), (50, 50)),
     "door": pygame.transform.scale(load_image('door.png'), (75, 125))
 }
-land_image = pygame.transform.scale(load_image('land.png'), (50, 50))
 player_image = pygame.transform.scale(load_image('player.png'), (150, 125))
 
 tile_width = tile_height = 50
 
-class Land(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(land_group, all_sprites)
-        self.image = land_image
-        self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group, all_sprites)
@@ -113,9 +107,6 @@ class Player(pygame.sprite.Sprite):
         if self.gravity > 8:
             self.gravity = 8
         self.rect.y += self.gravity
-        if self.rect.bottom > height - 35:
-            self.rect.bottom = height - 35
-
 
         for tile in land_list:
             if tile.colliderect(self.rect.x + self.dx, self.rect.y - 1, self.width, self.height):
@@ -147,13 +138,17 @@ def generate_level(level):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '.':
-                image = land_image
+                image = images["land"]
                 rect = image.get_rect().move(
                     tile_width * x, tile_height * y)
                 land_list.append(rect)
-                Land(x, y)
+                Tile("land", x, y)
             elif level[y][x] == '@':
                 Tile('grass', x, y)
+                image = images["grass"]
+                rect = image.get_rect().move(
+                    tile_width * x, tile_height * y)
+                land_list.append(rect)
             elif level[y][x] == '$':
                 Tile('door', x - 0.5, y - 1.5)
             elif level[y][x] == "&":
