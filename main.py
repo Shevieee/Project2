@@ -72,6 +72,7 @@ player_image = pygame.transform.scale(load_image('player.png'), (150, 125))
 
 tile_width = tile_height = 50
 
+
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group, all_sprites)
@@ -123,7 +124,6 @@ class Player(pygame.sprite.Sprite):
             self.dx = 0
 
 
-
 player = None
 
 all_sprites = pygame.sprite.Group()
@@ -155,6 +155,7 @@ def generate_level(level):
                 new_player = Player(x, y)
     # вернем игрока, а также размер поля в клетках
     return new_player, x, y, land_list
+
 
 player, level_x, level_y, land_list = generate_level(load_level('lvl1.txt'))
 running = True
