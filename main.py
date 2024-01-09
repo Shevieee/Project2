@@ -128,6 +128,8 @@ class Player(pygame.sprite.Sprite):
                     self.rect.y += (tile.top - self.rect.bottom)
                     self.gravity = 0
         self.rect.x += self.dx
+        if not key[pygame.K_LEFT] or not key[pygame.K_RIGHT]:
+            self.dx = 0
 
 
 
