@@ -102,6 +102,7 @@ class Cactuss(pygame.sprite.Sprite):
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
+        global dead
         super().__init__(player_group, all_sprites)
         self.image = player_image
         self.rect = self.image.get_rect().move(tile_width, tile_height + 800)
@@ -111,6 +112,11 @@ class Player(pygame.sprite.Sprite):
         self.height = self.image.get_height()
         self.dx = 0
         self.k = 1
+        self.go = 0
+        self.frame = 0
+        self.direction = 'r'
+        self.in_jump = 0
+        dead = 0
 
     def update(self):
         global player, level_x, level_y, land_list, exit_dr, k, dead, lvl, score, cactus
@@ -118,12 +124,17 @@ class Player(pygame.sprite.Sprite):
         if key[pygame.K_UP] and self.jmp == 0:
             self.gravity = -16
             self.jmp = 1
+            self.in_jump = 1
         if not key[pygame.K_UP]:
             self.jmp = 0
         if key[pygame.K_RIGHT]:
             self.dx = 4
+            self.go = 1
+            self.direction = 'r'
         if key[pygame.K_LEFT]:
             self.dx = -4
+            self.go = 1
+            self.direction = 'l'
 
         self.gravity += 1
         if self.gravity > 8:
@@ -140,6 +151,7 @@ class Player(pygame.sprite.Sprite):
                 elif self.gravity >= 0:
                     self.rect.y += (tile.top - self.rect.bottom)
                     self.gravity = 0
+                    self.in_jump = 0
         for move in exit_dr:
             if move.colliderect(self.rect.x, self.rect.y, self.width, self.height):
                 all_sprites.empty()
@@ -166,6 +178,31 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.dx
         if not key[pygame.K_LEFT] or not key[pygame.K_RIGHT]:
             self.dx = 0
+        if not key[pygame.K_LEFT] and not key[pygame.K_RIGHT]:
+            self.go = 0
+        if not self.in_jump and dead != -1:
+            if self.go == 1:
+                self.frame += 0.2
+                if self.frame > 6:
+                    self.frame -= 6
+                if self.direction == 'r':
+                    animation_images = ["player_run_right_1.png", "player_run_right_2.png", "player_run_right_3.png",
+                                        "player_run_right_4.png", "player_run_right_5.png", "player_run_right_6.png"]
+                    self.image = pygame.transform.scale(load_image(animation_images[int(self.frame)]), (98, 98))
+                else:
+                    animation_images = ["player_run_left_1.png", "player_run_left_2.png", "player_run_left_3.png",
+                                        "player_run_left_4.png", "player_run_left_5.png", "player_run_left_6.png"]
+                    self.image = pygame.transform.scale(load_image(animation_images[int(self.frame)]), (98, 98))
+            else:
+                if self.direction == 'r':
+                    self.image = player_image
+                else:
+                    self.image = pygame.transform.scale(load_image("player_left.png"), (98, 98))
+        elif dead != -1:
+            if self.direction == 'r':
+                self.image = pygame.transform.scale(load_image("player_jump_right.png"), (98, 98))
+            else:
+                self.image = pygame.transform.scale(load_image("player_jump_left.png"), (98, 98))
 
         score_text = [f"СЧЁТ: {score}"]
 
