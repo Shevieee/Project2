@@ -10,6 +10,18 @@ lvl = 1
 k = 0
 score = 0
 dead = 0
+clckd = 0
+pygame.display.set_caption("Platformer")
+strt_menu = pygame.mixer.Sound("data/strt_mn.mp3")
+strt_menu.set_volume(0.01)
+strt_game = pygame.mixer.Sound("data/strt_gm.mp3")
+strt_game.set_volume(0.05)
+end_game = pygame.mixer.Sound("data/nd_gm.mp3")
+end_game.set_volume(0.05)
+jumped = pygame.mixer.Sound("data/jmp.mp3")
+jumped.set_volume(0.8)
+moneta = pygame.mixer.Sound("data/moneta.mp3")
+moneta.set_volume(0.06)
 
 
 def load_image(name):
@@ -35,6 +47,7 @@ def start_screen():
     screen.blit(exit_btn, (664, 423))
     while True:
         for event in pygame.event.get():
+            strt_menu.play(-1)
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -42,12 +55,14 @@ def start_screen():
                 if (664 <= x <= 850) and (423 <= y <= 495):
                     terminate()
                 if (180 <= x <= 367) and (423 <= y <= 493):
+                    strt_menu.stop()
                     return
         pygame.display.flip()
         clock.tick(60)
 
 
 start_screen()
+strt_game.play(-1)
 
 
 def load_level(filename):
@@ -69,7 +84,7 @@ images = {
     "door": pygame.transform.scale(load_image('door.png'), (75, 125)),
     "cactus": pygame.transform.scale(load_image("cactus.png"), (50, 50))
 }
-player_image = pygame.transform.scale(load_image('player.png'), (98, 98))
+player_image = pygame.transform.scale(load_image('player.png'), (75, 98))
 coin_image = pygame.transform.scale(load_image('coin.png'), (50, 50))
 restart_btn = pygame.transform.scale(load_image("retry_btn.png"), (150, 50))
 dead_player = pygame.transform.scale(load_image("dead.png"), (100, 50))
@@ -102,6 +117,7 @@ class Cactuss(pygame.sprite.Sprite):
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
+        global dead
         super().__init__(player_group, all_sprites)
         self.image = player_image
         self.rect = self.image.get_rect().move(tile_width, tile_height + 800)
@@ -111,19 +127,36 @@ class Player(pygame.sprite.Sprite):
         self.height = self.image.get_height()
         self.dx = 0
         self.k = 1
+        self.go = 0
+        self.frame = 0
+        self.direction = 'r'
+        self.in_jump = 0
+        self.pr = 0
+        self.ply1 = 0
+        self.ply2 = 0
+        dead = 0
 
     def update(self):
-        global player, level_x, level_y, land_list, exit_dr, k, dead, lvl, score, cactus
+        global player, level_x, level_y, land_list, exit_dr, k, dead, clckd, lvl, score, cactus
         key = pygame.key.get_pressed()
-        if key[pygame.K_UP] and self.jmp == 0:
+        self.pr = 0
+        if key[pygame.K_UP] and self.jmp == 0 and self.pr == 0:
             self.gravity = -16
             self.jmp = 1
+            self.in_jump = 1
+            self.pr = 1
+            jumped.play()
+
         if not key[pygame.K_UP]:
             self.jmp = 0
         if key[pygame.K_RIGHT]:
             self.dx = 4
+            self.go = 1
+            self.direction = 'r'
         if key[pygame.K_LEFT]:
             self.dx = -4
+            self.go = 1
+            self.direction = 'l'
 
         self.gravity += 1
         if self.gravity > 8:
@@ -140,6 +173,7 @@ class Player(pygame.sprite.Sprite):
                 elif self.gravity >= 0:
                     self.rect.y += (tile.top - self.rect.bottom)
                     self.gravity = 0
+                    self.in_jump = 0
         for move in exit_dr:
             if move.colliderect(self.rect.x, self.rect.y, self.width, self.height):
                 all_sprites.empty()
@@ -154,6 +188,7 @@ class Player(pygame.sprite.Sprite):
         for coin in coins_group:
             if self.rect.colliderect(coin.rect):
                 score += 10
+                moneta.play()
                 coin.kill()
         for cact in cactus:
             if cact.colliderect(self.rect.x, self.rect.y, self.width, self.height):
@@ -161,11 +196,39 @@ class Player(pygame.sprite.Sprite):
                 self.jmp = -1
                 self.dx = 0
                 dead = -1
+                strt_game.stop()
+                if self.ply1 == 0:
+                    end_game.play()
+                    self.ply1 = 1
                 screen.blit(restart_btn, (400, 500))
-
         self.rect.x += self.dx
         if not key[pygame.K_LEFT] or not key[pygame.K_RIGHT]:
             self.dx = 0
+        if not key[pygame.K_LEFT] and not key[pygame.K_RIGHT]:
+            self.go = 0
+        if not self.in_jump and dead != -1:
+            if self.go == 1:
+                self.frame += 0.3
+                if self.frame > 6:
+                    self.frame -= 6
+                if self.direction == 'r':
+                    animation_images = ["player_run_right_1.png", "player_run_right_2.png", "player_run_right_3.png",
+                                        "player_run_right_4.png", "player_run_right_5.png", "player_run_right_6.png"]
+                    self.image = pygame.transform.scale(load_image(animation_images[int(self.frame)]), (75, 98))
+                else:
+                    animation_images = ["player_run_left_1.png", "player_run_left_2.png", "player_run_left_3.png",
+                                        "player_run_left_4.png", "player_run_left_5.png", "player_run_left_6.png"]
+                    self.image = pygame.transform.scale(load_image(animation_images[int(self.frame)]), (75, 98))
+            else:
+                if self.direction == 'r':
+                    self.image = player_image
+                else:
+                    self.image = pygame.transform.scale(load_image("player_left.png"), (75, 98))
+        elif dead != -1:
+            if self.direction == 'r':
+                self.image = pygame.transform.scale(load_image("player_jump_right.png"), (75, 98))
+            else:
+                self.image = pygame.transform.scale(load_image("player_jump_left.png"), (75, 98))
 
         score_text = [f"СЧЁТ: {score}"]
 
@@ -178,6 +241,13 @@ class Player(pygame.sprite.Sprite):
             score_rect.x = 51
             score_rect.y = 51
             screen.blit(string_rendered, score_rect)
+        if clckd == 1:
+            end_game.stop()
+            if self.ply2 == 0:
+                strt_game.play(-1)
+                self.ply2 = 1
+                self.ply1 = 0
+                clckd = 0
 
 
 player = None
@@ -242,6 +312,8 @@ while running:
                 tiles_group.empty()
                 player_group.empty()
                 coins_group.empty()
+                clckd = 1
+                score = 0
                 player, level_x, level_y, land_list, exit_dr, cactus = generate_level(load_level(f"lvl{lvl}.txt"))
     screen.fill(pygame.Color("white"))
     fon = pygame.transform.scale(load_image('background.jpg'), (1000, 1000))
