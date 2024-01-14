@@ -22,6 +22,8 @@ jumped = pygame.mixer.Sound("data/jmp.mp3")
 jumped.set_volume(0.8)
 moneta = pygame.mixer.Sound("data/moneta.mp3")
 moneta.set_volume(0.06)
+door_cracking = pygame.mixer.Sound("data/door-cracking.mp3")
+door_cracking.set_volume(1)
 
 
 def load_image(name):
@@ -134,13 +136,15 @@ class Player(pygame.sprite.Sprite):
         self.pr = 0
         self.ply1 = 0
         self.ply2 = 0
+        self.jmp_count = 0
         dead = 0
 
     def update(self):
         global player, level_x, level_y, land_list, exit_dr, k, dead, clckd, lvl, score, cactus
         key = pygame.key.get_pressed()
         self.pr = 0
-        if key[pygame.K_UP] and self.jmp == 0 and self.pr == 0:
+        if key[pygame.K_UP] and self.jmp == 0 and self.pr == 0 and self.jmp_count < 2:
+            self.jmp_count += 1
             self.gravity = -16
             self.jmp = 1
             self.in_jump = 1
@@ -174,8 +178,10 @@ class Player(pygame.sprite.Sprite):
                     self.rect.y += (tile.top - self.rect.bottom)
                     self.gravity = 0
                     self.in_jump = 0
+                    self.jmp_count = 0
         for move in exit_dr:
             if move.colliderect(self.rect.x, self.rect.y, self.width, self.height):
+                door_cracking.play()
                 all_sprites.empty()
                 tiles_group.empty()
                 player_group.empty()
@@ -192,7 +198,10 @@ class Player(pygame.sprite.Sprite):
                 coin.kill()
         for cact in cactus:
             if cact.colliderect(self.rect.x, self.rect.y, self.width, self.height):
-                self.image = dead_player
+                if self.direction == 'r' and dead != -1:
+                    self.image = dead_player
+                elif dead != -1:
+                    self.image = pygame.transform.scale(load_image("dead_left.png"), (100, 50))
                 self.jmp = -1
                 self.dx = 0
                 dead = -1
