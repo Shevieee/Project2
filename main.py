@@ -67,6 +67,48 @@ start_screen()
 strt_game.play(-1)
 
 
+def end_screen():
+    global lvl, score
+    end_text = ["Поздравляем! Вы прошли игру!",
+                f"Ваш счёт: {score}"]
+    fon = pygame.transform.scale(load_image('background.jpg'), (1000, 1000))
+    screen.blit(fon, (0, 0))
+    rest_btn = pygame.transform.scale(load_image("retry_btn.png"), (186, 70))
+    screen.blit(rest_btn, (150, 425))
+    exit_btn = pygame.transform.scale(load_image('exit_btn.png'), (186, 72))
+    screen.blit(exit_btn, (664, 423))
+    font = pygame.font.Font(None, 60)
+    text_coord_y = 300
+    text_coord_x = 180
+    for line in end_text:
+        string_rendered = font.render(line, 1, pygame.Color('black'))
+        end_rect = string_rendered.get_rect()
+        end_rect.x = text_coord_x
+        end_rect.y = text_coord_y
+        screen.blit(string_rendered, end_rect)
+        text_coord_y += 50
+        text_coord_x += 195
+    strt_menu.play(-1)
+    strt_menu.set_volume(0.05)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                if (664 <= x <= 850) and (423 <= y <= 495):
+                    terminate()
+                if (150 <= x <= 336) and (425 <= y <= 495):
+                    lvl = 1
+                    strt_menu.stop()
+                    score = 0
+                    player, level_x, level_y, land_list, exit_dr, cactus = generate_level(load_level(f"lvl1.txt"))
+                    strt_game.play(-1)
+                    return player, level_x, level_y, land_list, exit_dr, cactus
+        pygame.display.flip()
+        clock.tick(60)
+
+
 def load_level(filename):
     filename = "data/" + filename
     # читаем уровень, убирая символы перевода строки
@@ -190,7 +232,11 @@ class Player(pygame.sprite.Sprite):
                 if k == 1:
                     lvl += 1
                     k = 0
-                player, level_x, level_y, land_list, exit_dr, cactus = generate_level(load_level(f"lvl{lvl}.txt"))
+                if lvl > 6:
+                    strt_game.stop()
+                    player, level_x, level_y, land_list, exit_dr, cactus = end_screen()
+                else:
+                    player, level_x, level_y, land_list, exit_dr, cactus = generate_level(load_level(f"lvl{lvl}.txt"))
         for coin in coins_group:
             if self.rect.colliderect(coin.rect):
                 score += 10
@@ -242,11 +288,9 @@ class Player(pygame.sprite.Sprite):
         score_text = [f"СЧЁТ: {score}"]
 
         font = pygame.font.Font(None, 30)
-        text_coord = 10
         for line in score_text:
             string_rendered = font.render(line, 1, pygame.Color('black'))
             score_rect = string_rendered.get_rect()
-            score_rect.top = text_coord
             score_rect.x = 51
             score_rect.y = 51
             screen.blit(string_rendered, score_rect)
