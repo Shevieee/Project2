@@ -22,6 +22,8 @@ jumped = pygame.mixer.Sound("data/jmp.mp3")
 jumped.set_volume(0.8)
 moneta = pygame.mixer.Sound("data/moneta.mp3")
 moneta.set_volume(0.06)
+door_cracking = pygame.mixer.Sound("data/door-cracking.mp3")
+door_cracking.set_volume(0.8)
 
 
 def load_image(name):
@@ -65,6 +67,52 @@ start_screen()
 strt_game.play(-1)
 
 
+def end_screen():
+    global lvl, score
+    end_text = ["Поздравляем! Вы прошли игру!",
+                f"Ваш счёт: {score}"]
+    fon = pygame.transform.scale(load_image('background.jpg'), (1000, 1000))
+    screen.blit(fon, (0, 0))
+    rest_btn = pygame.transform.scale(load_image("retry_btn.png"), (186, 70))
+    screen.blit(rest_btn, (150, 425))
+    exit_btn = pygame.transform.scale(load_image('exit_btn.png'), (186, 72))
+    screen.blit(exit_btn, (664, 423))
+    font = pygame.font.Font(None, 60)
+    text_coord_y = 300
+    text_coord_x = 180
+    for line in end_text:
+        string_rendered = font.render(line, 1, pygame.Color('black'))
+        end_rect = string_rendered.get_rect()
+        end_rect.x = text_coord_x
+        end_rect.y = text_coord_y
+        screen.blit(string_rendered, end_rect)
+        text_coord_y += 50
+        text_coord_x += 195
+    strt_menu.play(-1)
+    strt_menu.set_volume(0.05)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                if (664 <= x <= 850) and (423 <= y <= 495):
+                    with open("data/score.txt", "w") as file:
+                        file.write(f"Уровень за данную игру: {lvl - 1}\n")
+                        file.write(f"Счёт за данную игру: {score}")
+                        file.close()
+                    terminate()
+                if (150 <= x <= 336) and (425 <= y <= 495):
+                    lvl = 1
+                    strt_menu.stop()
+                    score = 0
+                    player, level_x, level_y, land_list, exit_dr, cactus = generate_level(load_level(f"lvl1.txt"))
+                    strt_game.play(-1)
+                    return player, level_x, level_y, land_list, exit_dr, cactus
+        pygame.display.flip()
+        clock.tick(60)
+
+
 def load_level(filename):
     filename = "data/" + filename
     # читаем уровень, убирая символы перевода строки
@@ -84,7 +132,7 @@ images = {
     "door": pygame.transform.scale(load_image('door.png'), (75, 125)),
     "cactus": pygame.transform.scale(load_image("cactus.png"), (50, 50))
 }
-player_image = pygame.transform.scale(load_image('player.png'), (75, 98))
+player_image = pygame.transform.scale(load_image('player.png'), (65, 98))
 coin_image = pygame.transform.scale(load_image('coin.png'), (50, 50))
 restart_btn = pygame.transform.scale(load_image("retry_btn.png"), (150, 50))
 dead_player = pygame.transform.scale(load_image("dead.png"), (100, 50))
@@ -134,13 +182,15 @@ class Player(pygame.sprite.Sprite):
         self.pr = 0
         self.ply1 = 0
         self.ply2 = 0
+        self.jmp_count = 0
         dead = 0
 
     def update(self):
         global player, level_x, level_y, land_list, exit_dr, k, dead, clckd, lvl, score, cactus
         key = pygame.key.get_pressed()
         self.pr = 0
-        if key[pygame.K_UP] and self.jmp == 0 and self.pr == 0:
+        if key[pygame.K_UP] and self.jmp == 0 and self.pr == 0 and self.jmp_count < 2:
+            self.jmp_count += 1
             self.gravity = -16
             self.jmp = 1
             self.in_jump = 1
@@ -174,8 +224,10 @@ class Player(pygame.sprite.Sprite):
                     self.rect.y += (tile.top - self.rect.bottom)
                     self.gravity = 0
                     self.in_jump = 0
+                    self.jmp_count = 0
         for move in exit_dr:
             if move.colliderect(self.rect.x, self.rect.y, self.width, self.height):
+                door_cracking.play()
                 all_sprites.empty()
                 tiles_group.empty()
                 player_group.empty()
@@ -184,7 +236,11 @@ class Player(pygame.sprite.Sprite):
                 if k == 1:
                     lvl += 1
                     k = 0
-                player, level_x, level_y, land_list, exit_dr, cactus = generate_level(load_level(f"lvl{lvl}.txt"))
+                if lvl > 8:
+                    strt_game.stop()
+                    player, level_x, level_y, land_list, exit_dr, cactus = end_screen()
+                else:
+                    player, level_x, level_y, land_list, exit_dr, cactus = generate_level(load_level(f"lvl{lvl}.txt"))
         for coin in coins_group:
             if self.rect.colliderect(coin.rect):
                 score += 10
@@ -192,7 +248,10 @@ class Player(pygame.sprite.Sprite):
                 coin.kill()
         for cact in cactus:
             if cact.colliderect(self.rect.x, self.rect.y, self.width, self.height):
-                self.image = dead_player
+                if self.direction == 'r' and dead != -1:
+                    self.image = dead_player
+                elif dead != -1:
+                    self.image = pygame.transform.scale(load_image("dead_left.png"), (100, 50))
                 self.jmp = -1
                 self.dx = 0
                 dead = -1
@@ -223,19 +282,27 @@ class Player(pygame.sprite.Sprite):
                 if self.direction == 'r':
                     self.image = player_image
                 else:
-                    self.image = pygame.transform.scale(load_image("player_left.png"), (75, 98))
+                    self.image = pygame.transform.scale(load_image("player_left.png"), (65, 98))
         elif dead != -1:
             if self.direction == 'r':
-                self.image = pygame.transform.scale(load_image("player_jump_right.png"), (75, 98))
+                self.image = pygame.transform.scale(load_image("player_jump_right.png"), (65, 98))
             else:
-                self.image = pygame.transform.scale(load_image("player_jump_left.png"), (75, 98))
+                self.image = pygame.transform.scale(load_image("player_jump_left.png"), (65, 98))
 
         score_text = [f"СЧЁТ: {score}"]
+        lvl_text = [f"УРОВЕНЬ: {lvl}"]
 
         font = pygame.font.Font(None, 30)
         text_coord = 10
         for line in score_text:
             string_rendered = font.render(line, 1, pygame.Color('black'))
+            score_rect = string_rendered.get_rect()
+            score_rect.top = text_coord
+            score_rect.x = 51
+            score_rect.y = 91
+            screen.blit(string_rendered, score_rect)
+        for line2 in lvl_text:
+            string_rendered = font.render(line2, 1, pygame.Color('black'))
             score_rect = string_rendered.get_rect()
             score_rect.top = text_coord
             score_rect.x = 51
@@ -326,5 +393,10 @@ while running:
     all_sprites.update()
     clock.tick(60)
     pygame.display.flip()
+
+with open("data/score.txt", "w") as file:
+    file.write(f"Уровень за данную игру: {lvl}\n")
+    file.write(f"Счёт за данную игру: {score}")
+    file.close()
 
 pygame.quit()
