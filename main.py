@@ -240,7 +240,8 @@ class Player(pygame.sprite.Sprite):
                     strt_game.stop()
                     player, level_x, level_y, land_list, exit_dr, cactus = end_screen()
                 else:
-                    player, level_x, level_y, land_list, exit_dr, cactus = generate_level(load_level(f"lvls/lvl{lvl}.txt"))
+                    player, level_x, level_y, land_list, exit_dr, cactus = (
+                        generate_level(load_level(f"lvls/lvl{lvl}.txt")))
         for coin in coins_group:
             if self.rect.colliderect(coin.rect):
                 score += 10
@@ -271,12 +272,14 @@ class Player(pygame.sprite.Sprite):
                 if self.frame > 6:
                     self.frame -= 6
                 if self.direction == 'r':
-                    animation_images = ["player/player_run_right_1.png", "player/player_run_right_2.png", "player/player_run_right_3.png",
-                                        "player/player_run_right_4.png", "player/player_run_right_5.png", "player/player_run_right_6.png"]
+                    animation_images = ["player/player_run_right_1.png", "player/player_run_right_2.png",
+                                        "player/player_run_right_3.png", "player/player_run_right_4.png",
+                                        "player/player_run_right_5.png", "player/player_run_right_6.png"]
                     self.image = pygame.transform.scale(load_image(animation_images[int(self.frame)]), (75, 98))
                 else:
-                    animation_images = ["player/player_run_left_1.png", "player/player_run_left_2.png", "player/player_run_left_3.png",
-                                        "player/player_run_left_4.png", "player/player_run_left_5.png", "player/player_run_left_6.png"]
+                    animation_images = ["player/player_run_left_1.png", "player/player_run_left_2.png",
+                                        "player/player_run_left_3.png", "player/player_run_left_4.png",
+                                        "player/player_run_left_5.png", "player/player_run_left_6.png"]
                     self.image = pygame.transform.scale(load_image(animation_images[int(self.frame)]), (75, 98))
             else:
                 if self.direction == 'r':
