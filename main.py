@@ -315,6 +315,9 @@ class Player(pygame.sprite.Sprite):
                 self.ply2 = 1
                 self.ply1 = 0
                 clckd = 0
+        if dead == -1:
+            self.jmp = -1
+            self.gravity = 0
 
 
 player = None
