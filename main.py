@@ -26,7 +26,7 @@ door_cracking = pygame.mixer.Sound("data/soundtrack/door-cracking.mp3")
 door_cracking.set_volume(0.8)
 
 
-def load_image(name):
+def load_image(name):  # загрузка изображения
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
@@ -35,12 +35,12 @@ def load_image(name):
     return image
 
 
-def terminate():
+def terminate():  # выход
     pygame.quit()
     sys.exit()
 
 
-def start_screen():
+def start_screen():  # запуск стартового окна
     fon = pygame.transform.scale(load_image('main/background.jpg'), (1000, 1000))
     screen.blit(fon, (0, 0))
     start_btn = pygame.transform.scale(load_image('main/start_btn.png'), (279, 126))
@@ -63,11 +63,11 @@ def start_screen():
         clock.tick(60)
 
 
-start_screen()
-strt_game.play(-1)
+start_screen() # запуск стартового окна
+strt_game.play(-1) # старт музыки
 
 
-def end_screen():
+def end_screen():  # финальное окно
     global lvl, score
     end_text = ["Поздравляем! Вы прошли игру!",
                 f"Ваш счёт: {score}"]
@@ -113,7 +113,7 @@ def end_screen():
         clock.tick(60)
 
 
-def load_level(filename):
+def load_level(filename): # загрузка уровня
     filename = "data/" + filename
     # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
@@ -139,7 +139,7 @@ dead_player = pygame.transform.scale(load_image("player/dead.png"), (100, 50))
 tile_width = tile_height = 50
 
 
-class Tile(pygame.sprite.Sprite):
+class Tile(pygame.sprite.Sprite):  # для препятствий
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group, all_sprites)
         self.image = images[tile_type]
@@ -147,7 +147,7 @@ class Tile(pygame.sprite.Sprite):
             tile_width * pos_x, tile_height * pos_y)
 
 
-class Coin(pygame.sprite.Sprite):
+class Coin(pygame.sprite.Sprite):  # монета
     def __init__(self, pos_x, pos_y):
         super().__init__(coins_group, all_sprites)
         self.image = coin_image
@@ -155,7 +155,7 @@ class Coin(pygame.sprite.Sprite):
             tile_width * pos_x, tile_height * pos_y)
 
 
-class Cactuss(pygame.sprite.Sprite):
+class Cactuss(pygame.sprite.Sprite):  # класс препятствий
     def __init__(self, pos_x, pos_y):
         super().__init__(cactus_group, all_sprites)
         self.image = coin_image
@@ -163,7 +163,7 @@ class Cactuss(pygame.sprite.Sprite):
             tile_width * pos_x, tile_height * pos_y)
 
 
-class Player(pygame.sprite.Sprite):
+class Player(pygame.sprite.Sprite):  # игрок, движение, анимация, обработка коллизии, обработка смерти, переход уровней
     def __init__(self, pos_x, pos_y):
         global dead
         super().__init__(player_group, all_sprites)
@@ -333,7 +333,7 @@ coins_group = pygame.sprite.Group()
 cactus_group = pygame.sprite.Group()
 
 
-def generate_level(level):
+def generate_level(level):  # отрисовка уровня(-ей)
     new_player, x, y = None, None, None
     land_list = []
     exit_dr = []
@@ -380,7 +380,7 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and dead == -1:
             x, y = event.pos
-            if (401 <= x <= 549) and (500 <= y <= 550):
+            if (401 <= x <= 549) and (500 <= y <= 550):  # рестарт игры при смерти
                 all_sprites.empty()
                 tiles_group.empty()
                 player_group.empty()
@@ -400,7 +400,7 @@ while running:
     clock.tick(60)
     pygame.display.flip()
 
-with open("data/scores/score.txt", "w") as file:
+with open("data/scores/score.txt", "w") as file:  # подсчет результатов
     file.write(f"Уровень за данную игру: {lvl}\n")
     file.write(f"Счёт за данную игру: {score}")
     file.close()
